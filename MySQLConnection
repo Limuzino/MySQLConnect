@@ -1,0 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using MySql.Data.MySqlClient;
+using System.Windows.Forms;
+using System.Data;
+
+namespace SVS2._0
+{
+    class sql
+    {
+        
+        private MySqlConnection connection;
+        private string server;
+        private string database;
+        private string uid;
+        private string password;
+
+        //Constructor
+        public sql()
+        {
+            Initialize();
+        }
+
+        //Initialize values
+        private void Initialize()
+        {
+            server = "";
+            database = "";
+            uid = "";
+            password = "";
+            string connectionString;
+            connectionString = "SERVER=" + server + ";" + "DATABASE=" + 
+		    database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
+
+            connection = new MySqlConnection(connectionString);
+        }
+
+        private bool OpenConnection()
+        {
+            try
+            {
+                connection.Open();
+                return true;
+            }
+            catch (MySqlException ex)
+            {
+                switch (ex.Number)
+                {
+                    case 0:
+                        MessageBox.Show("Cannot connect to server.  Contact administrator");
+                        break;
+
+                    case 1045:
+                        MessageBox.Show("Invalid username/password, please try again");
+                        break;
+                }
+                return false;
+            }
+        }
+
+        //Close connection
+        private bool CloseConnection()
+        {
+            try
+            {
+                connection.Close();
+                return true;
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show(ex.Message);
+                return false;
+            }
+        }
+
+        public string[] query(string query)
+        {
+            string[] output = new string[3];
+            int g = 0;
+
+            if (this.OpenConnection() == true)
+            {
+                MySqlCommand cmd = new MySqlCommand(query, connection);
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+        
+                while (dataReader.Read())
+                {
+                    output[g] = dataReader.GetString(g);
+                }
+
+                dataReader.Close();
+                this.CloseConnection();
+                return output;
+            }
+            else
+            {
+                return output;
+            }   
+        }
+
+        public void execute(string sql)
+        {
+            if (this.OpenConnection() == true)
+            {
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+                this.CloseConnection();
+            }
+        }
+
+        public DataTable datatable(string query)
+        {
+           var adapter = new MySqlDataAdapter(query, connection);
+            DataSet DS = new DataSet();
+            //get query results in dataset
+            adapter.Fill(DS);
+            //return datatable with all records
+            return DS.Tables[0];         
+        }
+        
+
+
+    }
+}
